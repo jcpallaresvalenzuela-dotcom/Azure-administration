@@ -16,27 +16,42 @@ on:
 
 jobs:
   delete-repos:
-    name: Delete repositories in ${{ inputs.acr-name }}
     runs-on: ubuntu-latest
     environment: dev
-    permissions:
-      contents: read
     steps:
       - name: Login to Azure (Service Principal)
         uses: azure/login@v2
         with:
           creds: ${{ secrets.SERVICE_PRINCIPAL }}
 
-      - name: Delete repositories in ACR
+      # 🔑 Login al data-plane del ACR (evita "authentication required")
+      - name: Login to ACR (data-plane)
         env:
           ACR_NAME: ${{ inputs.acr-name }}
-          DRY_RUN: ${{ inputs.dry-run }}
         shell: bash
         run: |
           set -euo pipefail
-          echo "Listing repositories in ACR: ${ACR_NAME}"
-          repos=$(az acr repository list -n "${ACR_NAME}" -o tsv || true)
-          if [[ -z "${repos}" ]]; then
+          # --expose-token evita depender de docker; silencioso para logs
+          az acr login -n "${ACR_NAME}" --expose-token --only-show-errors 1>/dev/null
+
+      - name: Delete repositories in ACR
+        env:
+          ACR_NAME: ${{ inputs.acr-name }}
+          DRY_RUN: ${{ inputs['dry-run'] }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Retry ligero por propagación de permisos
+          for i in {1..5}; do
+            if repos=$(az acr repository list -n "${ACR_NAME}" -o tsv 2>/dev/null); then
+              break
+            fi
+            echo "ACR not ready yet, retrying in 5s ($i/5)..."
+            sleep 5
+          done
+
+          if [[ -z "${repos:-}" ]]; then
             echo "No repositories found. Nothing to delete."
             exit 0
           fi
