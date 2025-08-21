@@ -27,12 +27,11 @@ Este Terraform despliega una Azure Container Registry Task (ACR Task) que, de fo
 - Permisos suficientes para gestionar ACR Tasks en el ACR de destino.
 
 ## Variables de entrada (raíz)
-- `resource_group_name` (string, sensible): Nombre del Resource Group del ACR.
-- `acr_name` (string, sensible): Nombre del ACR de destino.
-- `schedule_cron` (string, por defecto "0 1 * * *"): Cron en UTC para programar la ejecución.
-
-El módulo adicionalmente admite:
-- `task_name` (string, por defecto `delete-acr-repos-daily`): Nombre de la ACR Task.
+- `acr_tasks` (map(object), sensible): Conjunto de ACRs a los que crear la Task. Cada entrada debe incluir:
+  - `resource_group_name` (string): RG del ACR
+  - `acr_name` (string): Nombre del ACR
+  - `schedule_cron` (string, opcional, por defecto `"0 1 * * *"`): cron en UTC
+  - `task_name` (string, opcional, por defecto `delete-acr-repos-daily`)
 
 ## Salidas del módulo
 - `task_id`: ID del recurso `azurerm_container_registry_task`.
@@ -43,9 +42,21 @@ El módulo adicionalmente admite:
 1) Ajusta variables en `terraform.tfvars`
 
 ```hcl
-resource_group_name = "<RESOURCE_GROUP_NAME>"
-acr_name            = "<ACR_NAME>"
-schedule_cron       = "0 1 * * *" # 01:00 UTC diario
+acr_tasks = {
+  acr1 = {
+    resource_group_name = "<RESOURCE_GROUP_NAME>"
+    acr_name            = "<ACR_NAME>"
+    schedule_cron       = "0 1 * * *" # 01:00 UTC diario
+    task_name           = "delete-acr-repos-daily"
+  }
+  # Añade tantos ACRs como necesites:
+  # acr2 = {
+  #   resource_group_name = "<RESOURCE_GROUP_NAME_2>"
+  #   acr_name            = "<ACR_NAME_2>"
+  #   schedule_cron       = "0 */6 * * *" # cada 6 horas
+  #   task_name           = "delete-acr-repos-6h"
+  # }
+}
 ```
 
 2) Inicializa y aplica:
@@ -77,10 +88,10 @@ terraform apply
 - La expresión cron se interpreta en UTC por Azure.
 
 ## Archivos relevantes
-- `main.tf`: Invoca al módulo `acr-task-delete-repos` con RG, ACR y cron.
+- `main.tf`: Invoca al módulo `acr-task-delete-repos` con `for_each` sobre `acr_tasks`.
 - `providers.tf`: Define versión de Terraform y proveedor `azurerm`.
-- `variables.tf`: Variables de entrada del stack raíz.
-- `terraform.tfvars`: Ejemplo de valores.
+- `variables.tf`: Define `acr_tasks` como `map(object)`.
+- `terraform.tfvars`: Ejemplo de valores para múltiples ACRs.
 - `modules/acr-task-delete-repos/`:
   - `main.tf`: Recurso `azurerm_container_registry_task` y carga del YAML.
   - `data.tf`: Lectura del ACR destino.
