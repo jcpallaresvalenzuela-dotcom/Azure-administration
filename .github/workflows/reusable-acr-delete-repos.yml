@@ -3,10 +3,6 @@ name: Reusable - Delete all repositories in ACR (Azure CLI)
 on:
   workflow_dispatch:
     inputs:
-      acr-name:
-        description: Name of the Azure Container Registry (sin .azurecr.io)
-        required: true
-        type: string
       dry-run:
         description: If true, do not delete, only print actions
         required: false
@@ -27,7 +23,7 @@ jobs:
       - name: Login to ACR (data-plane)
         shell: bash
         env:
-          ACR_NAME: ${{ inputs.acr-name }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
         run: |
           set -euo pipefail
           az acr login -n "${ACR_NAME}" --expose-token --only-show-errors 1>/dev/null
@@ -35,7 +31,7 @@ jobs:
       - name: Delete repositories in ACR
         shell: bash
         env:
-          ACR_NAME: ${{ inputs.acr-name }}
+          ACR_NAME: ${{ secrets.ACR_NAMEe }}
           DRY_RUN: ${{ inputs['dry-run'] }}
         run: |
           set -euo pipefail
