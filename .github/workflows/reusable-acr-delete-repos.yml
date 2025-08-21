@@ -46,7 +46,7 @@ jobs:
       - name: Delete repositories in ACR
         shell: bash
         env:
-          ACR_NAME: ${{ secrets.ACR_NAMEe }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           DRY_RUN: ${{ inputs['dry-run'] }}
         run: |
           set -euo pipefail
