@@ -1,10 +1,10 @@
 name: Reusable - Delete all repositories in ACR (Azure CLI)
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       acr-name:
-        description: Name of the Azure Container Registry
+        description: Name of the Azure Container Registry (sin .azurecr.io)
         required: true
         type: string
       dry-run:
@@ -12,10 +12,6 @@ on:
         required: false
         default: false
         type: boolean
-    secrets:
-      SERVICE_PRINCIPAL:
-        description: Azure credentials JSON created with --sdk-auth (environment secret in 'dev')
-        required: true
 
 
 jobs:
