@@ -53,32 +53,30 @@ jobs:
 
           echo "Listing repositories in ACR: ${ACR_NAME}"
 
-          # Un solo intento, salida a array
-          mapfile -t REPOS < <(az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors)
-
-          # Esperar 15s tras el listado
-          sleep 15
-
-          if (( ${#REPOS[@]} == 0 )); then
+          # Listar una vez y mostrar; si no hay nada, salir
+          REPO_COUNT=$(az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors | wc -l | tr -d ' ')
+          if [[ "${REPO_COUNT}" == "0" ]]; then
             echo "No repositories found. Nothing to delete."
             exit 0
           fi
 
           echo "Found repositories:"
-          printf ' - %s\n' "${REPOS[@]}"
+          az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors | sed 's/^/ - /'
 
           if [[ "${DRY_RUN}" == "true" ]]; then
             echo "DRY RUN enabled. Skipping deletions."
             exit 0
           fi
 
-          for repo in "${REPOS[@]}"; do
-            [[ -z "${repo}" ]] && continue
-            echo "Deleting repository: ${repo}"
-            az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
-            # Esperar 15s después de cada borrado
-            sleep 15
-          done
+          # Procesar en streaming (portable a bash 3.x)
+          az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors \
+          | while IFS= read -r repo; do
+              [[ -z "${repo}" ]] && continue
+              echo "Deleting repository: ${repo}"
+              az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
+              # opcional: espera entre borrados
+              # sleep 15
+            done
 
           echo "Done deleting repositories in ${ACR_NAME}."
         
