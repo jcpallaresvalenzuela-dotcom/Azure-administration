@@ -8,6 +8,21 @@ on:
         required: false
         default: false
         type: boolean
+  
+  workflow_call:
+    inputs:
+      dry-run:
+        description: If true, do not delete, only print actions
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      SERVICE_PRINCIPAL:
+        required: true
+        description: Azure credentials JSON created with --sdk-auth
+      ACR_NAME:
+        required: true
+        description: ACR name (short, e.g. jcpallares)
 
 
 jobs:
