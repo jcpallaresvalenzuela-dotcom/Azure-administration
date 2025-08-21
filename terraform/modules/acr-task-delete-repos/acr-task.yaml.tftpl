@@ -1,0 +1,38 @@
+version: v1.1.0
+stepTimeout: 1800
+secrets:
+  - id: ACR_PASSWORD
+    value: "${admin_password}"
+env:
+  - REGISTRY=${login_server}
+  - ACR_USER=${admin_username}
+steps:
+  - cmd: alpine:3
+    entryPoint: /bin/sh -c
+    env:
+      - REGISTRY=${login_server}
+      - ACR_USER=${admin_username}
+      - ACR_PASS={{.Secrets.ACR_PASSWORD}}
+    arguments:
+      - |
+        set -euo pipefail
+        apk add --no-cache curl jq >/dev/null
+
+        base="https://$${REGISTRY}"
+        url="$${base}/acr/v1/_catalog?n=100"
+        echo ">> Listing and deleting repositories from $${REGISTRY}"
+
+        while [ -n "$${url}" ]; do
+          tmp_headers=$(mktemp); tmp_body=$(mktemp)
+          curl -sS -D "$${tmp_headers}" -o "$${tmp_body}" -u "$${ACR_USER}:$${ACR_PASS}" "$${url}"
+          jq -r '.repositories[]?' < "$${tmp_body}" | while read -r repo; do
+            [ -z "$${repo}" ] && continue
+            echo "Deleting repository: $${repo}"
+            curl -sS -u "$${ACR_USER}:$${ACR_PASS}" -X DELETE "$${base}/acr/v1/$${repo}" >/dev/null
+          done
+          next=$(grep -i '^Link:' "$${tmp_headers}" | sed -n 's/.*<\([^>]*\)>.*/\1/p' || true)
+          url="$${next}"
+          rm -f "$${tmp_headers}" "$${tmp_body}"
+        done
+
+        echo ">> Done."
