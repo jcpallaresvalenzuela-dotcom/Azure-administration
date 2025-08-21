@@ -56,6 +56,9 @@ jobs:
           # Un solo intento, salida a array
           mapfile -t REPOS < <(az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors)
 
+          # Esperar 15s tras el listado
+          sleep 15
+
           if (( ${#REPOS[@]} == 0 )); then
             echo "No repositories found. Nothing to delete."
             exit 0
@@ -73,6 +76,8 @@ jobs:
             [[ -z "${repo}" ]] && continue
             echo "Deleting repository: ${repo}"
             az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
+            # Esperar 15s después de cada borrado
+            sleep 15
           done
 
           echo "Done deleting repositories in ${ACR_NAME}."
