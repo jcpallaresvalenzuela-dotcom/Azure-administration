@@ -34,39 +34,37 @@ jobs:
           # --expose-token evita depender de docker; silencioso para logs
           az acr login -n "${ACR_NAME}" --expose-token --only-show-errors 1>/dev/null
 
-      - name: Delete repositories in ACR
-        env:
-          ACR_NAME: ${{ inputs.acr-name }}
-          DRY_RUN: ${{ inputs['dry-run'] }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # Retry ligero por propagación de permisos
-          for i in {1..5}; do
-            if repos=$(az acr repository list -n "${ACR_NAME}" -o tsv 2>/dev/null); then
-              break
+          - name: Delete repositories in ACR
+          env:
+            ACR_NAME: ${{ inputs.acr-name }}
+            DRY_RUN: ${{ inputs['dry-run'] }}
+          shell: bash
+          run: |
+            set -euo pipefail
+        
+            echo "Listing repositories in ACR: ${ACR_NAME}"
+        
+            # Captura robusta en array (un intento)
+            mapfile -t REPOS < <(az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors)
+        
+            if [[ ${#REPOS[@]} -eq 0 ]]; then
+              echo "No repositories found. Nothing to delete."
+              exit 0
             fi
-            echo "ACR not ready yet, retrying in 5s ($i/5)..."
-            sleep 5
-          done
-
-          if [[ -z "${repos:-}" ]]; then
-            echo "No repositories found. Nothing to delete."
-            exit 0
-          fi
-
-          echo "Found repositories:" && echo "${repos}" | sed 's/^/ - /'
-
-          if [[ "${DRY_RUN}" == "true" ]]; then
-            echo "DRY RUN enabled. Skipping deletions."
-            exit 0
-          fi
-
-          while IFS= read -r repo; do
-            [[ -z "${repo}" ]] && continue
-            echo "Deleting repository: ${repo}"
-            az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
-          done <<< "${repos}"
-
-          echo "Done deleting repositories in ${ACR_NAME}."
+        
+            echo "Found repositories:"
+            printf ' - %s\n' "${REPOS[@]}"
+        
+            if [[ "${DRY_RUN}" == "true" ]]; then
+              echo "DRY RUN enabled. Skipping deletions."
+              exit 0
+            fi
+        
+            for repo in "${REPOS[@]}"; do
+              [[ -z "${repo}" ]] && continue
+              echo "Deleting repository: ${repo}"
+              az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
+            done
+        
+            echo "Done deleting repositories in ${ACR_NAME}."
+        
