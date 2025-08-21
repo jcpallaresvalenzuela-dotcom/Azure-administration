@@ -2,7 +2,7 @@ name: Scheduled - Delete ACR repos
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # 01:00 UTC daily
+    - cron: '0 1 * * *'   # 01:00 UTC diario
   workflow_dispatch:
     inputs:
       dry-run:
@@ -17,6 +17,7 @@ jobs:
     uses: ./.github/workflows/reusable-acr-delete-repos.yml
     with:
       acr-name: jcpallares
-      dry-run: ${{ github.event.inputs.dry-run == 'true' }}
+      # Si es manual, usa el input; si es schedule, por defecto false
+      dry-run: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry-run == 'true' }}
     secrets:
       SERVICE_PRINCIPAL: ${{ secrets.SERVICE_PRINCIPAL }}
