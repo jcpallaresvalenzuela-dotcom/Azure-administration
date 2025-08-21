@@ -3,14 +3,13 @@ name: Scheduled - Delete ACR repos
 on:
   schedule:
     - cron: '0 1 * * *'   # 01:00 UTC diario
-  workflow_dispatch: {}
+  workflow_dispatch: {}   # Permite ejecutarlo manualmente sin inputs
 
 jobs:
   call-reusable:
     uses: ./.github/workflows/reusable-acr-delete-repos.yml
     with:
-      # Si es manual, toma el input; si es schedule, será false por defecto
-      dry-run: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry-run == 'true' }}
+      dry-run: false   # Siempre borrado real en este workflow
     secrets:
       SERVICE_PRINCIPAL: ${{ secrets.SERVICE_PRINCIPAL }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
