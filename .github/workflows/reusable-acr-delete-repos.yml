@@ -24,47 +24,45 @@ jobs:
         with:
           creds: ${{ secrets.SERVICE_PRINCIPAL }}
 
-      # 🔑 Login al data-plane del ACR (evita "authentication required")
       - name: Login to ACR (data-plane)
+        shell: bash
         env:
           ACR_NAME: ${{ inputs.acr-name }}
-        shell: bash
         run: |
           set -euo pipefail
-          # --expose-token evita depender de docker; silencioso para logs
           az acr login -n "${ACR_NAME}" --expose-token --only-show-errors 1>/dev/null
 
-          - name: Delete repositories in ACR
-          env:
-            ACR_NAME: ${{ inputs.acr-name }}
-            DRY_RUN: ${{ inputs['dry-run'] }}
-          shell: bash
-          run: |
-            set -euo pipefail
-        
-            echo "Listing repositories in ACR: ${ACR_NAME}"
-        
-            # Captura robusta en array (un intento)
-            mapfile -t REPOS < <(az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors)
-        
-            if [[ ${#REPOS[@]} -eq 0 ]]; then
-              echo "No repositories found. Nothing to delete."
-              exit 0
-            fi
-        
-            echo "Found repositories:"
-            printf ' - %s\n' "${REPOS[@]}"
-        
-            if [[ "${DRY_RUN}" == "true" ]]; then
-              echo "DRY RUN enabled. Skipping deletions."
-              exit 0
-            fi
-        
-            for repo in "${REPOS[@]}"; do
-              [[ -z "${repo}" ]] && continue
-              echo "Deleting repository: ${repo}"
-              az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
-            done
-        
-            echo "Done deleting repositories in ${ACR_NAME}."
+      - name: Delete repositories in ACR
+        shell: bash
+        env:
+          ACR_NAME: ${{ inputs.acr-name }}
+          DRY_RUN: ${{ inputs['dry-run'] }}
+        run: |
+          set -euo pipefail
+
+          echo "Listing repositories in ACR: ${ACR_NAME}"
+
+          # Un solo intento, salida a array
+          mapfile -t REPOS < <(az acr repository list -n "${ACR_NAME}" -o tsv --only-show-errors)
+
+          if (( ${#REPOS[@]} == 0 )); then
+            echo "No repositories found. Nothing to delete."
+            exit 0
+          fi
+
+          echo "Found repositories:"
+          printf ' - %s\n' "${REPOS[@]}"
+
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            echo "DRY RUN enabled. Skipping deletions."
+            exit 0
+          fi
+
+          for repo in "${REPOS[@]}"; do
+            [[ -z "${repo}" ]] && continue
+            echo "Deleting repository: ${repo}"
+            az acr repository delete -n "${ACR_NAME}" --repository "${repo}" --yes --only-show-errors 1>/dev/null
+          done
+
+          echo "Done deleting repositories in ${ACR_NAME}."
         
