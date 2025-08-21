@@ -1,3 +1,7 @@
+*IMPORTANTE*
+
+**ESTA TASK SOLO FUNCIONA CON CUENTAS 'Pay-As-You-Go'**
+
 # ACR Tasks: Eliminación programada de repositorios en Azure Container Registry
 
 Este Terraform despliega una Azure Container Registry Task (ACR Task) que, de forma programada (cron en UTC), lista todos los repositorios de un ACR y los elimina. Se apoya en el módulo `modules/acr-task-delete-repos` incluido en este mismo repositorio.
