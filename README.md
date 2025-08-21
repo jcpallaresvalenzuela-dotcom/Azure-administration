@@ -15,8 +15,8 @@ Este workflow permite **listar y eliminar** todos los repositorios dentro de un 
   - `dry-run` (boolean) → Si está en `true`, solo lista los repositorios sin eliminarlos.
 - **Secrets requeridos:**
   - `SERVICE_PRINCIPAL` → Credenciales de Azure en formato JSON (`az ad sp create-for-rbac --sdk-auth`).
-  - `ACR_NAME` → Nombre corto del ACR (ejemplo: `jcpallares`, **no** `jcpallares.azurecr.io`).
-- **Modo de ejecución:**
+  - `ACR_NAME` → Nombre corto del ACR 
+  - **Modo de ejecución:**
   - Puede ejecutarse **manualmente** desde la pestaña *Actions* (`workflow_dispatch`).
   - Puede ser **reutilizado** por otros workflows mediante `workflow_call`.
 
