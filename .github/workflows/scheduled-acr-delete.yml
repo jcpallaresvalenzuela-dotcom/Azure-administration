@@ -14,10 +14,9 @@ on:
 
 jobs:
   call-reusable:
-    uses: ./reusable-acr-delete-repos.yml
+    uses: ./.github/workflows/reusable-acr-delete-repos.yml
     with:
       acr-name: jcpallares
       dry-run: ${{ github.event.inputs.dry-run == 'true' }}
     secrets:
       SERVICE_PRINCIPAL: ${{ secrets.SERVICE_PRINCIPAL }}
-    environment: dev

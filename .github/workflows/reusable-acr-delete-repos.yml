@@ -16,7 +16,7 @@ on:
       SERVICE_PRINCIPAL:
         description: Azure credentials JSON created with --sdk-auth (environment secret in 'dev')
         required: true
-    workflow_dispatch:
+
 
 jobs:
   delete-repos:
