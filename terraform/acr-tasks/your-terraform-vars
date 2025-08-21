@@ -1,0 +1,25 @@
+  # Ejemplo para añadir otro ACR
+  # acr1 = {
+  #   resource_group_name = "rg-otro"
+  #   acr_name            = "otroacr"
+  #   schedule_cron       = "0 */6 * * *"
+  #   task_name           = "delete-acr-repos-6h"
+  # }
+
+    # Ejemplo para añadir otro ACR
+  # acr2 = {
+  #   resource_group_name = "rg-otro"
+  #   acr_name            = "otroacr"
+  #   schedule_cron       = "0 */6 * * *"
+  #   task_name           = "delete-acr-repos-6h"
+  # }
+
+    # Ejemplo para añadir otro ACR
+  # acr3 = {
+  #   resource_group_name = "rg-otro"
+  #   acr_name            = "otroacr"
+  #   schedule_cron       = "0 */6 * * *"
+  #   task_name           = "delete-acr-repos-6h"
+  # }
+
+  
